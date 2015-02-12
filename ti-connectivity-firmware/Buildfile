@@ -3,9 +3,9 @@
 # License: TI-TSPA
 
 name=ti-connectivity-firmware
-version=git7d0c7a8
+version=gite10097a
 release=1
-source=(http://www.buildgear.org/mirror/$name-$version.tar.gz)
+source=(http://mirror.mini-distribution.io/$name-$version.tar.gz)
 
 build() {
    mkdir -p $PKG/lib/firmware
