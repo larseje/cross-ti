@@ -1,0 +1,12 @@
+[Unit]
+Description=PVR Drivers
+
+[Service]
+ExecStart=/bin/bash -c "/etc/pvr/pvr-drivers.sh start"
+ExecStart=/bin/bash -c "echo 0 > /sys/class/graphics/fbcon/cursor_blink"
+ExecStop=/bin/bash -c "/etc/pvr/pvr-drivers.sh stop"
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+RequiredBy=graphical.target

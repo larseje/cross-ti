@@ -1,0 +1,66 @@
+# Description: TI SGX Linux SDK (drivers and libraries only)
+# URL: http://www.ti.com
+
+name=ti-graphics-sdk
+version=5.00.00.01
+release=1
+source=(http://downloads.ti.com/dsps/dsps_public_sw/gfxsdk/5_01_01_01/exports/Graphics_SDK_setuplinux_hardfp_5_01_01_01.bin
+        pvr-drivers.sh
+        pvr.service
+        powervr.ini
+        egl.pc glesv2.pc)
+depends=(native/linux-source linux)
+
+build(){
+   # Prepare Linux sources
+   cd $NATIVE_SYSROOT/usr/src/linux
+   ln -sf $SYSROOT/boot/vmlinux vmlinux
+   ln -sf $SYSROOT/usr/src/linux/Module.symvers Module.symvers
+   make CROSS_COMPILE=$HOST- ARCH=arm prepare scripts
+
+   # SGX build configuration
+   export BUILD=release
+   export OMAPES=8.x
+   export FBDEV=yes
+   export SUPPORT_XORG=0
+   export EGLIMAGE=0
+   export PM_RUNTIME=0
+
+   # Build SGX kernel modules
+   cd $SRC/$name-$version/GFX_Linux_KM
+   make -j $JOBS ARCH=arm \
+        CROSS_COMPILE=$HOST- \
+        KERNELDIR=$NATIVE_SYSROOT/usr/src/linux \
+        TI_PLATFORM=ti335x \
+        INSTALL_MOD_PATH=$PKG
+
+   # Install SGX drivers
+   install -D -m 644 services4/3rdparty/dc_ti335x_linux/omaplfb.ko \
+      $PKG/lib/modules/$LINUX_VERSION/extra/omaplfb.ko
+   install -D -m 644 pvrsrvkm.ko $PKG/lib/modules/$LINUX_VERSION/extra/pvrsrvkm.ko
+   install -D -m 644 services4/3rdparty/bufferclass_ti/bufferclass_ti.ko \
+      $PKG/lib/modules/$LINUX_VERSION/extra/bufferclass_ti.ko
+
+   # Install SGX libraries and control util
+   install -d $PKG/usr/lib
+   install -D -m 644 $SRC/$name-$version/gfx_rel_es8.x/*.so $PKG/usr/lib
+   install -D -m 755 $SRC/$name-$version/gfx_rel_es8.x/pvrsrvctl $PKG/usr/sbin/pvrsrvctl
+
+   # Install SGX headers
+   cp -r $SRC/$name-$version/include $PKG/usr
+
+   # Install systemd init scripts
+   install -D -m 0755 $SRC/pvr-drivers.sh $PKG/etc/pvr/pvr-drivers.sh
+   install -D -m 0644 $SRC/pvr.service $PKG/etc/systemd/system/pvr.service
+   mkdir -p $PKG/etc/systemd/system/graphical.target.requires
+   ln -s /etc/systemd/system/pvr.service \
+      $PKG/etc/systemd/system/graphical.target.requires/pvr.service
+
+   # Install SGX configuration file
+   install -D -m 0644 $SRC/powervr.ini $PKG/etc/powervr.ini
+
+   # Install pkg-config files
+   install -d $PKG/usr/lib/pkgconfig
+   install -D -m 0644 $SRC/egl.pc $PKG/usr/lib/pkgconfig/egl.pc
+   install -D -m 0644 $SRC/glesv2.pc $PKG/usr/lib/pkgconfig/glesv2.pc
+}
