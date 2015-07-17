@@ -1,0 +1,15 @@
+# Description: Bluetooth firmware files
+# URL: https://github.com/TI-ECS/bt-firmware
+# License: TI-TSPA
+
+name=ti-bt-firmware
+version=git169b2df
+release=1
+source=(http://mirror.mini-distribution.io/$name-$version.tar.gz)
+
+build() {
+	mkdir -p $PKG/lib/firmware
+
+	cp LICENCE $PKG/lib/firmware/LICENCE.ti-bt-firmware
+	cp TIInit* $PKG/lib/firmware/
+}
